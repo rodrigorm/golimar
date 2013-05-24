@@ -1,0 +1,3 @@
+[submodule "plugin/python/skype4py"]
+	path = plugin/python/skype4py
+	url = git://github.com/awahlig/skype4py.git
