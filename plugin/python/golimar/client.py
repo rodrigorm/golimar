@@ -25,3 +25,6 @@ class Client:
     def setChat(self, chat):
         self.chat = chat
         self.ui.setChat(self.chat)
+
+    def render(self):
+        self.ui.render()

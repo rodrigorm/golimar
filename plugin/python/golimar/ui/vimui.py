@@ -1,3 +1,5 @@
+import functools
+
 import vim
 
 class Ui:
@@ -42,6 +44,11 @@ class Ui:
         self.compose.clean()
         self.compose.focus()
 
+    def render(self):
+        self.contacts.update()
+        self.chats.update()
+        self.messages.update()
+
 class Window:
     name = 'WINDOW'
     open_cmd = 'new'
@@ -68,17 +75,16 @@ class Window:
         self.buffer[:] = []
 
     def write(self, msg, return_focus = True, after = 'normal G'):
+        self._return_focus(self.__curry(self._write, msg, after), return_focus)
+
+    def _write(self, msg, after = 'normal G'):
         if not self.is_open:
             self.create()
-        if return_focus:
-            prev_win = vim.eval('winnr()')
         if self.buffer_empty():
             self.buffer[:] = str(msg.encode('utf-8')).split('\n')
         else:
             self.buffer.append(str(msg.encode('utf-8')).split('\n'))
         self.command(after)
-        if return_focus:
-            vim.command('%swincmd W' % prev_win)
 
     def buffer_empty(self):
         if len(self.buffer) == 1 \
@@ -97,7 +103,10 @@ class Window:
     def getwinnr(self):
         return int(vim.eval("bufwinnr('"+self.name+"')"))
 
-    def set_line(self, lineno):
+    def set_line(self, lineno, return_focus = True):
+        self._return_focus(self.__curry(self._set_line, lineno), return_focus)
+
+    def _set_line(self, lineno):
         self.focus()
         vim.command("normal %sgg" % str(lineno))
 
@@ -106,6 +115,20 @@ class Window:
 
     def winnr(self):
         return int(vim.eval("bufwinnr('" + self.name + "')"))
+
+    def _return_focus(self, callback, flag = True):
+        if flag:
+            self.__return_focus(callback)
+        else:
+            callback()
+
+    def __return_focus(self, callback):
+        prev_win = vim.eval('winnr()')
+        callback()
+        vim.command('%swincmd W' % prev_win)
+
+    def __curry(self, callback, *args):
+        return functools.partial(callback, *args)
 
 class ContactsWindow(Window):
     name = "Contacts"

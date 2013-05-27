@@ -25,6 +25,7 @@ python golimar = Golimar()
 command! Golimar python golimar.open()
 command! -nargs=1 GolimarChatWith python golimar.chatWith('<args>')
 command! -nargs=1 GolimarSearchChat python golimar.searchChat('<args>')
+command! -nargs=0 GolimarRender python golimar.render()
 
 augroup Golimar
     autocmd!

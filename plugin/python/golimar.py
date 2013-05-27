@@ -25,3 +25,6 @@ class Golimar:
 
     def searchChat(self, chatname):
         self.client.searchChat(chatname)
+
+    def render(self):
+        self.client.render()
