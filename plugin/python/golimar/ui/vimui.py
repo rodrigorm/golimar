@@ -22,12 +22,18 @@ class Ui:
         self.friends = FriendsWindow(self, 'vertical belowright new')
         self.friends.create()
 
+        vim.command('vertical resize 40')
+
         self.chats = ChatsWindow(self, 'belowright new')
         self.chats.create()
+
+        vim.command('resize +5')
 
         self.messages.focus()
         self.compose = ComposeWindow(self, 'rightbelow new')
         self.compose.create()
+
+        vim.command('resize 5')
 
         self.is_open = True
         # except Exception as e:
@@ -246,7 +252,7 @@ class MessagesWindow(Window):
             return
 
         for message in self.chat.RecentMessages:
-            self.write('(' + message.FromHandle + ') ' + message.Body)
+            self.write('[' + str(message.Datetime) + '] (' + message.FromHandle + ') ' + message.Body)
 
     def markAsSeen(self):
         if self.chat == None:
