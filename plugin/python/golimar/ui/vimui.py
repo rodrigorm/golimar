@@ -7,6 +7,7 @@ class Ui:
         self.skype = skype
         self.is_open = False
         self.tabnr = None
+        self.skype.RegisterEventHandler('MessageStatus', self.MessageStatus)
 
     def open(self):
         if self.is_open:
@@ -41,6 +42,8 @@ class Ui:
 
     def setChat(self, chat):
         self.messages.setChat(chat)
+        if self.has_focus():
+            self.messages.markAsSeen()
         self.compose.clean()
         self.compose.focus()
 
@@ -48,6 +51,13 @@ class Ui:
         self.contacts.update()
         self.chats.update()
         self.messages.update()
+
+    def MessageStatus(self, message, status):
+        if self.has_focus():
+            self.messages.markAsSeen()
+
+    def has_focus(self):
+        return self.is_open and vim.eval('tabpagenr()') == self.tabnr
 
 class Window:
     name = 'WINDOW'
@@ -165,10 +175,15 @@ class ChatsWindow(Window):
         self.clean()
 
         for chat in self.ui.skype.RecentChats:
-            if chat.Topic == '':
-                self.write(chat.Members[0].Handle + self._unseen(chat))
-            else:
-                self.write(chat.Topic + self._unseen(chat))
+            self.write(self._topic(chat) + self._unseen(chat))
+
+    def _topic(self, chat):
+        if chat.Topic == '':
+            for member in chat.Members:
+                if member.Handle != self.ui.skype.CurrentUser.Handle:
+                    return member.Handle
+        else:
+            return chat.Topic
 
     def _unseen(self, chat):
         count = self.unseenCount(chat)
@@ -207,6 +222,12 @@ class MessagesWindow(Window):
 
         for message in self.chat.RecentMessages:
             self.write('(' + message.FromHandle + ') ' + message.Body)
+
+    def markAsSeen(self):
+        if self.chat == None:
+            return
+
+        for message in self.chat.RecentMessages:
             if message.Status == 'RECEIVED':
                 message.MarkAsSeen()
 
