@@ -12,6 +12,7 @@ class Client:
     def send(self):
         self.chat.SendMessage(self.ui.composeMessage())
         self.ui.composeClean()
+        self.ui.update()
 
     def chatWith(self, username):
         self.setChat(self.skype.CreateChatWith(username))

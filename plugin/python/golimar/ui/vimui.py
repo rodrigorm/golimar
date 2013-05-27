@@ -7,7 +7,6 @@ class Ui:
         self.skype = skype
         self.is_open = False
         self.tabnr = None
-        self.skype.RegisterEventHandler('MessageStatus', self.MessageStatus)
 
     def open(self):
         if self.is_open:
@@ -36,6 +35,7 @@ class Ui:
         vim.command('resize 5')
 
         self.is_open = True
+        self.update()
         # except Exception as e:
         #     self.is_open = False
         #     raise e
@@ -52,15 +52,35 @@ class Ui:
             self.messages.markAsSeen()
         self.compose.clean()
         self.compose.focus()
+        self.update()
 
     def render(self):
         self.friends.update()
         self.chats.update()
         self.messages.update()
 
+    def bind(self):
+        self.skype.RegisterEventHandler('MessageStatus', self.MessageStatus)
+        self.skype.RegisterEventHandler('UserStatus', self.UserStatus)
+        self.skype.RegisterEventHandler('ConnectionStatus', self.UserStatus)
+
+    def unbind(self):
+        self.skype.UnregisterEventHandler('MessageStatus', self.MessageStatus)
+        self.skype.UnregisterEventHandler('UserStatus', self.UserStatus)
+        self.skype.UnregisterEventHandler('ConnectionStatus', self.UserStatus)
+
     def MessageStatus(self, message, status):
+        self.update()
+
+    def UserStatus(self, status):
+        self.update()
+
+    def update(self):
+        self.unbind()
+        self.render()
         if self.has_focus():
             self.messages.markAsSeen()
+        self.bind()
 
     def has_focus(self):
         return self.is_open and vim.eval('tabpagenr()') == self.tabnr
@@ -168,20 +188,15 @@ class FriendsWindow(Window):
 
     def on_create(self):
         self.update()
-        self.set_line(0)
-        self.ui.skype.RegisterEventHandler('UserStatus', self.UserStatus)
-        self.ui.skype.RegisterEventHandler('ConnectionStatus', self.UserStatus)
         vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedFriend()<cr>')
-
-    def UserStatus(self, status):
-        self.update()
-        self.set_line(0)
 
     def update(self):
         self.clean()
 
         for user in self.ui.skype.Friends:
             self.write('(' + user.OnlineStatus + ') ' + user.Handle)
+
+        self.set_line(0)
 
     def selected(self):
         return self.ui.skype.Friends[self.get_line()]
@@ -191,19 +206,15 @@ class ChatsWindow(Window):
 
     def on_create(self):
         self.update()
-        self.set_line(0)
-        self.ui.skype.RegisterEventHandler('MessageStatus', self.MessageStatus)
         vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedChat()<cr>')
-
-    def MessageStatus(self, message, status):
-        self.update()
-        self.set_line(0)
 
     def update(self):
         self.clean()
 
         for chat in self.ui.skype.RecentChats:
             self.write(self._topic(chat) + self._unseen(chat))
+
+        self.set_line(0)
 
     def _topic(self, chat):
         if chat.Topic == '':
@@ -236,13 +247,9 @@ class MessagesWindow(Window):
 
     def on_create(self):
         self.chat = None
-        self.ui.skype.RegisterEventHandler('MessageStatus', self.MessageStatus)
 
     def setChat(self, chat):
         self.chat = chat
-        self.update()
-
-    def MessageStatus(self, message, status):
         self.update()
 
     def update(self):
