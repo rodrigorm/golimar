@@ -63,7 +63,7 @@ class Window:
     def create(self):
         """ create window """
         vim.command('silent ' + self.open_cmd + ' ' + self.name)
-        vim.command('setlocal buftype=' + self.buftype + ' modifiable winfixheight winfixwidth')
+        vim.command('setlocal buftype=' + self.buftype + ' modifiable winfixheight winfixwidth nobackup noswapfile')
         self.buffer = vim.current.buffer
         self.is_open = True
         self.on_create()
@@ -166,9 +166,24 @@ class ChatsWindow(Window):
 
         for chat in self.ui.skype.RecentChats:
             if chat.Topic == '':
-                self.write(chat.Members[0].Handle)
+                self.write(chat.Members[0].Handle + self._unseen(chat))
             else:
-                self.write(chat.Topic)
+                self.write(chat.Topic + self._unseen(chat))
+
+    def _unseen(self, chat):
+        count = self.unseenCount(chat)
+        if count:
+            return ' [' + str(count) + ']'
+
+        return ''
+
+    def unseenCount(self, chat):
+        result = 0
+        for message in chat.RecentMessages:
+            if message.Status == 'RECEIVED':
+                result += 1
+
+        return result
 
 class MessagesWindow(Window):
     name = 'Skype'
@@ -192,6 +207,8 @@ class MessagesWindow(Window):
 
         for message in self.chat.RecentMessages:
             self.write('(' + message.FromHandle + ') ' + message.Body)
+            if message.Status == 'RECEIVED':
+                message.MarkAsSeen()
 
 class ComposeWindow(Window):
     name = 'Compose'
