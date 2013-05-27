@@ -3,7 +3,7 @@ import Skype4Py
 
 class Client:
     def __init__(self):
-        self.skype = Skype4Py.Skype(Events=self)
+        self.skype = Skype4Py.Skype(Transport='dbus', Events=self)
         self.ui = golimar.ui.vimui.Ui(self.skype)
 
     def open(self):
