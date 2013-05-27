@@ -28,3 +28,9 @@ class Golimar:
 
     def render(self):
         self.client.render()
+
+    def openSelectedFriend(self):
+        self.client.openSelectedFriend()
+
+    def openSelectedChat(self):
+        self.client.openSelectedChat()

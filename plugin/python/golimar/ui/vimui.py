@@ -19,8 +19,8 @@ class Ui:
 
         self.tabnr = vim.eval('tabpagenr()')
 
-        self.contacts = ContactsWindow(self, 'vertical belowright new')
-        self.contacts.create()
+        self.friends = FriendsWindow(self, 'vertical belowright new')
+        self.friends.create()
 
         self.chats = ChatsWindow(self, 'belowright new')
         self.chats.create()
@@ -48,7 +48,7 @@ class Ui:
         self.compose.focus()
 
     def render(self):
-        self.contacts.update()
+        self.friends.update()
         self.chats.update()
         self.messages.update()
 
@@ -58,6 +58,12 @@ class Ui:
 
     def has_focus(self):
         return self.is_open and vim.eval('tabpagenr()') == self.tabnr
+
+    def selectedFriend(self):
+        return self.friends.selected()
+
+    def selectedChat(self):
+        return self.chats.selected()
 
 class Window:
     name = 'WINDOW'
@@ -82,6 +88,9 @@ class Window:
         """ callback """
 
     def clean(self):
+        if  self.buffer_empty():
+            return
+
         self.buffer[:] = []
 
     def write(self, msg, return_focus = True, after = 'normal G'):
@@ -120,6 +129,13 @@ class Window:
         self.focus()
         vim.command("normal %sgg" % str(lineno))
 
+    def get_line(self):
+        return int(self._return_focus(self.__curry(self._get_line), True))
+
+    def _get_line(self):
+        self.focus()
+        return vim.current.range.start
+
     def focus(self):
         vim.command(str(self.winnr()) + "wincmd w")
 
@@ -128,26 +144,28 @@ class Window:
 
     def _return_focus(self, callback, flag = True):
         if flag:
-            self.__return_focus(callback)
+            return self.__return_focus(callback)
         else:
-            callback()
+            return callback()
 
     def __return_focus(self, callback):
         prev_win = vim.eval('winnr()')
-        callback()
+        result = callback()
         vim.command('%swincmd W' % prev_win)
+        return result
 
     def __curry(self, callback, *args):
         return functools.partial(callback, *args)
 
-class ContactsWindow(Window):
-    name = "Contacts"
+class FriendsWindow(Window):
+    name = "Friends"
 
     def on_create(self):
         self.update()
         self.set_line(0)
         self.ui.skype.RegisterEventHandler('UserStatus', self.UserStatus)
         self.ui.skype.RegisterEventHandler('ConnectionStatus', self.UserStatus)
+        vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedFriend()<cr>')
 
     def UserStatus(self, status):
         self.update()
@@ -159,6 +177,9 @@ class ContactsWindow(Window):
         for user in self.ui.skype.Friends:
             self.write('(' + user.OnlineStatus + ') ' + user.Handle)
 
+    def selected(self):
+        return self.ui.skype.Friends[self.get_line()]
+
 class ChatsWindow(Window):
     name = "Chats"
 
@@ -166,6 +187,7 @@ class ChatsWindow(Window):
         self.update()
         self.set_line(0)
         self.ui.skype.RegisterEventHandler('MessageStatus', self.MessageStatus)
+        vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedChat()<cr>')
 
     def MessageStatus(self, message, status):
         self.update()
@@ -199,6 +221,9 @@ class ChatsWindow(Window):
                 result += 1
 
         return result
+
+    def selected(self):
+        return self.ui.skype.RecentChats[self.get_line()]
 
 class MessagesWindow(Window):
     name = 'Skype'

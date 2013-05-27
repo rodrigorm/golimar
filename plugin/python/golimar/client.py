@@ -28,3 +28,9 @@ class Client:
 
     def render(self):
         self.ui.render()
+
+    def openSelectedFriend(self):
+        self.setChat(self.skype.CreateChatWith(self.ui.selectedFriend().Handle))
+
+    def openSelectedChat(self):
+        self.setChat(self.ui.selectedChat())
