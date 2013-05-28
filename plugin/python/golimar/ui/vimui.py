@@ -198,6 +198,9 @@ class FriendsWindow(Window):
 
         self.set_line(0)
 
+        self.focus()
+        vim.command('set filetype=golimarfriends')
+
     def selected(self):
         return self.ui.skype.Friends[self.get_line()]
 
