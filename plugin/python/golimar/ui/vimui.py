@@ -189,6 +189,7 @@ class FriendsWindow(Window):
     def on_create(self):
         self.update()
         vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedFriend()<cr>')
+        vim.command('set filetype=golimarfriends')
 
     def update(self):
         self.clean()
@@ -197,9 +198,6 @@ class FriendsWindow(Window):
             self.write('(' + user.OnlineStatus + ') ' + user.Handle)
 
         self.set_line(0)
-
-        self.focus()
-        vim.command('set filetype=golimarfriends')
 
     def selected(self):
         return self.ui.skype.Friends[self.get_line()]
