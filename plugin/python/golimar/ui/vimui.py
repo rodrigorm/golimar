@@ -104,8 +104,8 @@ class Window:
 
     def create(self):
         """ create window """
-        vim.command('silent ' + self.open_cmd + ' ' + self.name)
-        vim.command('setlocal buftype=' + self.buftype + ' modifiable winfixheight winfixwidth nobackup noswapfile')
+        vim.command('silent %s %s' % (self.open_cmd, self.name))
+        vim.command('setlocal buftype=%s modifiable winfixheight winfixwidth nobackup noswapfile' % (self.buftype))
         self.buffer = vim.current.buffer
         self.is_open = True
         self.on_create()
@@ -195,7 +195,7 @@ class FriendsWindow(Window):
         self.clean()
 
         for user in self.ui.skype.Friends:
-            self.write('(' + user.OnlineStatus + ') ' + user.Handle)
+            self.write('(%s) %s' % (user.OnlineStatus, user.Handle))
 
         self.set_line(0)
 
@@ -228,7 +228,7 @@ class ChatsWindow(Window):
     def _unseen(self, chat):
         count = self.unseenCount(chat)
         if count:
-            return ' [' + str(count) + ']'
+            return ' [%i]' % (count)
 
         return ''
 
@@ -248,6 +248,7 @@ class MessagesWindow(Window):
 
     def on_create(self):
         self.chat = None
+        vim.command('set filetype=golimarchat')
 
     def setChat(self, chat):
         self.chat = chat
@@ -260,7 +261,8 @@ class MessagesWindow(Window):
             return
 
         for message in self.chat.RecentMessages:
-            self.write('[' + str(message.Datetime) + '] (' + message.FromHandle + ') ' + message.Body)
+            userFrom = '(%s)' % (message.FromHandle)
+            self.write('[%s] %s %s' % (str(message.Datetime), userFrom, message.Body))
 
     def markAsSeen(self):
         if self.chat == None:
