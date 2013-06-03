@@ -274,11 +274,18 @@ class MessagesWindow(Window):
         if self.chat is None:
             return
 
+        biggerName = 0
+        for message in self.chat.RecentMessages:
+            if len(message.FromHandle) > biggerName:
+                biggerName = len(message.FromHandle)
+        biggerName += 2
+
         for message in self.chat.RecentMessages:
             datetime = str(message.Datetime)
-            userFrom = '(%s)' % (message.FromHandle)
+            userFrom = '%s' % (message.FromHandle)
+            userFrom = userFrom.rjust(biggerName)
             body = message.Body
-            self.write('[%s] %s %s' % (datetime, userFrom, body))
+            self.write('[%s] %s: %s' % (datetime, userFrom, body))
 
     def markAsSeen(self):
         if self.chat is None:
