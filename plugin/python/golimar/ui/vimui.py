@@ -134,9 +134,9 @@ class Window:
         if not self.is_open:
             self.create()
         if self.buffer_empty():
-            self.buffer[:] = str(msg.encode('utf-8')).split('\n')
+            self.buffer[:] = str(msg).split('\n')
         else:
-            self.buffer.append(str(msg.encode('utf-8')).split('\n'))
+            self.buffer.append(str(msg).split('\n'))
         self.command(after)
 
     def buffer_empty(self):
@@ -169,6 +169,13 @@ class Window:
     def _get_line(self):
         self.focus()
         return vim.current.range.start
+
+    def eval(self, cmd):
+        return self._return_focus(self.__curry(self._eval, cmd), True)
+
+    def _eval(self, cmd):
+        self.focus()
+        return vim.eval(cmd)
 
     def focus(self):
         vim.command(str(self.winnr()) + "wincmd w")
@@ -219,8 +226,7 @@ class ChatsWindow(Window):
 
     def on_create(self):
         self.update()
-        vim.command('\
-                nnoremap <buffer> <cr> :python golimar.openSelectedChat()<cr>')
+        vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedChat()<cr>')
 
     def update(self):
         self.clean()
@@ -236,7 +242,7 @@ class ChatsWindow(Window):
                 if member.Handle != self.ui.skype.CurrentUser.Handle:
                     return member.Handle
         else:
-            return chat.Topic
+            return chat.Topic.encode('utf-8')
 
     def _unseen(self, chat):
         count = self.unseenCount(chat)
@@ -280,12 +286,30 @@ class MessagesWindow(Window):
                 biggerName = len(message.FromHandle)
         biggerName += 2
 
+        width = self.width()
+        pad = 21 + 1 + biggerName + 1 + 1
+
         for message in self.chat.RecentMessages:
             datetime = str(message.Datetime)
             userFrom = '%s' % (message.FromHandle)
             userFrom = userFrom.rjust(biggerName)
-            body = message.Body
+            body = self.__body(message.Body.encode('utf-8'), width, pad)
             self.write('[%s] %s: %s' % (datetime, userFrom, body))
+
+    def __body(self, body, width, pad):
+        lines = str(body).split('\n')
+        result = []
+        for line in lines:
+            result.extend(self.__split_str_into_len(str(line), width - pad - 4))
+
+        return ('\n' + (' ' * pad)).join(result)
+
+    def width(self):
+        return int(self.eval('winwidth(0)'))
+
+    def __split_str_into_len(self, s, l=2):
+        """ Split a string into chunks of length l """
+        return [s[i:i+l] for i in range(0, len(s), l)]
 
     def markAsSeen(self):
         if self.chat is None:
