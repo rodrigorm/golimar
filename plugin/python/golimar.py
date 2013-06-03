@@ -8,8 +8,10 @@ sys.path.append(directory + '/skype4py')
 
 import golimar.client
 
+
 class Golimar:
-    """Acts as a facade layer to the skype client.
+    """
+        Acts as a facade layer to the skype client.
     """
     def __init__(self):
         self.client = golimar.client.Client()

@@ -1,6 +1,7 @@
 import golimar.ui.vimui
 import Skype4Py
 
+
 class Client:
     def __init__(self):
         self.skype = Skype4Py.Skype(Transport='dbus', Events=self)

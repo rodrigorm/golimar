@@ -1,6 +1,12 @@
-import functools
+#!/usr/bin/env python
+#
+# vimui.py
+#
+# User Interface for Vim
 
+import functools
 import vim
+
 
 class Ui:
     def __init__(self, skype):
@@ -91,6 +97,7 @@ class Ui:
     def selectedChat(self):
         return self.chats.selected()
 
+
 class Window:
     name = 'WINDOW'
     open_cmd = 'new'
@@ -105,7 +112,8 @@ class Window:
     def create(self):
         """ create window """
         vim.command('silent %s %s' % (self.open_cmd, self.name))
-        vim.command('setlocal buftype=%s modifiable winfixheight winfixwidth nobackup noswapfile' % (self.buftype))
+        vim.command('setlocal buftype=%s modifiable winfixheight winfixwidth\
+                nobackup noswapfile' % (self.buftype))
         self.buffer = vim.current.buffer
         self.is_open = True
         self.on_create()
@@ -114,15 +122,15 @@ class Window:
         """ callback """
 
     def clean(self):
-        if  self.buffer_empty():
+        if self.buffer_empty():
             return
 
         self.buffer[:] = []
 
-    def write(self, msg, return_focus = True, after = 'normal G'):
+    def write(self, msg, return_focus=True, after='normal G'):
         self._return_focus(self.__curry(self._write, msg, after), return_focus)
 
-    def _write(self, msg, after = 'normal G'):
+    def _write(self, msg, after='normal G'):
         if not self.is_open:
             self.create()
         if self.buffer_empty():
@@ -148,7 +156,7 @@ class Window:
     def getwinnr(self):
         return int(vim.eval("bufwinnr('"+self.name+"')"))
 
-    def set_line(self, lineno, return_focus = True):
+    def set_line(self, lineno, return_focus=True):
         self._return_focus(self.__curry(self._set_line, lineno), return_focus)
 
     def _set_line(self, lineno):
@@ -168,7 +176,7 @@ class Window:
     def winnr(self):
         return int(vim.eval("bufwinnr('" + self.name + "')"))
 
-    def _return_focus(self, callback, flag = True):
+    def _return_focus(self, callback, flag=True):
         if flag:
             return self.__return_focus(callback)
         else:
@@ -183,12 +191,15 @@ class Window:
     def __curry(self, callback, *args):
         return functools.partial(callback, *args)
 
+
 class FriendsWindow(Window):
     name = "Friends"
 
     def on_create(self):
         self.update()
-        vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedFriend()<cr>')
+        vim.command('\
+                nnoremap <buffer> <cr> :python golimar.openSelectedFriend()\
+                <cr>')
         vim.command('set filetype=golimarfriends')
 
     def update(self):
@@ -202,12 +213,14 @@ class FriendsWindow(Window):
     def selected(self):
         return self.ui.skype.Friends[self.get_line()]
 
+
 class ChatsWindow(Window):
     name = "Chats"
 
     def on_create(self):
         self.update()
-        vim.command('nnoremap <buffer> <cr> :python golimar.openSelectedChat()<cr>')
+        vim.command('\
+                nnoremap <buffer> <cr> :python golimar.openSelectedChat()<cr>')
 
     def update(self):
         self.clean()
@@ -243,6 +256,7 @@ class ChatsWindow(Window):
     def selected(self):
         return self.ui.skype.RecentChats[self.get_line()]
 
+
 class MessagesWindow(Window):
     name = 'Skype'
 
@@ -257,20 +271,23 @@ class MessagesWindow(Window):
     def update(self):
         self.clean()
 
-        if self.chat == None:
+        if self.chat is None:
             return
 
         for message in self.chat.RecentMessages:
+            datetime = str(message.Datetime)
             userFrom = '(%s)' % (message.FromHandle)
-            self.write('[%s] %s %s' % (str(message.Datetime), userFrom, message.Body))
+            body = message.Body
+            self.write('[%s] %s %s' % (datetime, userFrom, body))
 
     def markAsSeen(self):
-        if self.chat == None:
+        if self.chat is None:
             return
 
         for message in self.chat.RecentMessages:
             if message.Status == 'RECEIVED':
                 message.MarkAsSeen()
+
 
 class ComposeWindow(Window):
     name = 'Compose'
